@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="css/bootstrap.css" media="all" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="js/jquery-3.1.0.min.js"></script>
+    <title>Yandex</title>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-1">
+            <h1>Yandex</h1>
+        </div>
+    </div>
+</div>
+
+<form id="form" method="post">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-1 vcenter">
+                ФИО
+            </div>
+            <div class="col-md-4 vcenter">
+                <input required name="fio" type="text" class="form-control" placeholder="Иванов Иван Иванович" value="Иванов Иван Иванович">
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="col-md-1 vcenter">
+                Email
+            </div>
+            <div class="col-md-4 vcenter">
+                <input required name="email" type="email" class="form-control" placeholder="yandex@yandex.ru" value="yandex@yandex.ru">
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="col-md-1 vcenter">
+                Телефон
+            </div>
+            <div class="col-md-4 vcenter">
+                <input required name="phone" type="tel" class="form-control" placeholder="+7(926)111-22-33" value="+7(126)111-11-13">
+            </div>
+        </div>
+        <div class="row">
+            <div id="resultContainer" class="col-md-12 vcenter">
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="col-md-1 vcenter">
+                <button id="submitButton" type="submit" class="btn btn-primary">Отправить</button>
+            </div>
+        </div>
+    </div>
+</form>
+<script type="text/javascript">
+    var Validate={
+        fio:"fio",
+        email:"email",
+        phone:"phone",
+        result:{},
+        emailDomain:[
+                '@ya.ru',
+                '@yandex.ru',
+                '@yandex.ua',
+                '@yandex.by',
+                '@yandex.kz',
+                '@yandex.com'
+        ],
+        phoneDigitSumLimit:30,
+        errorClass:"error",
+        validateFio:function(){
+            var re=/^[\wа-яА-ЯЁё]+\s[\wа-яА-ЯЁё]+\s[\wа-яА-ЯЁё]+$/;
+            var fio=this.getFio();
+            if(!re.test(fio)) this.result[this.fio]="Это поле должно состоять из 3х слов";
+            else delete this.result[this.fio];
+        },
+        checkDomain: function (domain) {
+            var length = this.emailDomain.length;
+            for(var i = 0; i < length; i++) {
+                if(this.emailDomain[i] == domain) return true;
+            }
+            return false;
+        },
+        validateEmail:function(){
+            var re=/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+            var reDomain=/(@\w+([\.-]?\w+)*(\.\w{2,3})+)$/;
+            var email=this.getEmail();
+            if(!re.test(email)) {
+                this.result[this.email]="Неверный формат email";
+            } else if(!this.checkDomain(reDomain.exec(email)[0])) {
+                this.result[this.email]="Домен почты неверный";
+            } else {
+                delete this.result[this.email];
+            }
+        },
+        getPhone: function () {
+            return $("input[name="+this.phone+"]").val();
+        },
+        sumDigitsPhone: function (phone) {
+            var re=/(\d)/g;
+            var digits=phone.match(re);
+            var sum = digits.reduce(function(a, b) { return parseInt(a) + parseInt(b); }, 0);
+            return sum;
+        },
+        validatePhone:function(){
+            var re=/^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/;
+            var phone=this.getPhone();
+            if(!re.test(phone)) {
+                this.result[this.phone]="Неверный формат ввода телефона";
+            } else if(this.sumDigitsPhone(phone)>this.phoneDigitSumLimit) {
+                this.result[this.phone]="Сумма цифр больше "+this.phoneDigitSumLimit;
+            } else {
+                delete this.result[this.phone];
+            }
+        },
+        getFio:function(){
+            return $("input[name="+this.fio+"]").val();
+        },
+        getEmail:function(){
+            return $("input[name="+this.email+"]").val();
+        },
+        validateAll:function () {
+            $("input[name="+this.fio+"]").removeClass(this.errorClass);
+            $("input[name="+this.email+"]").removeClass(this.errorClass);
+            $("input[name="+this.phone+"]").removeClass(this.errorClass);
+            this.validateFio();
+            this.validateEmail();
+            this.validatePhone();
+            return this.result;
+        },
+        processRequest:function (form) {
+            $("#submitButton").prop('disabled', true);
+            var resultContainer=$("#resultContainer");
+            var that=this;
+//            var url="js/success.json";
+//            var url="js/error.json";
+            var url="js/progress.json";
+            $.ajax({
+                url:url,
+                type:"json",
+                method:"get",
+                data:form.serialize(),
+                success:function(html){
+                    switch(html.status){
+                        case "success":
+                            resultContainer.removeClass("progress").addClass("success");
+                            resultContainer.html("Success");
+                            break;
+                        case "error":
+                            resultContainer.removeClass("progress").addClass("error");
+                            resultContainer.html(html.reason);
+                            break;
+                        default: //progress
+                            resultContainer.addClass("progress");
+                            setTimeout(function () {
+                                that.processRequest(form);
+                            }, html.timeout);
+                    }
+                }
+            });
+        }
+    };
+    $(function(){
+        $("body").on("click","#submitButton",function(){
+            var result=Validate.validateAll();
+            var countError=0;
+            $.each(result,function (index, value) {
+                $("input[name="+index+"]").addClass(Validate.errorClass);
+                countError++;
+            });
+
+            if(countError==0){
+                Validate.processRequest($("#form"));
+                console.log("asdasd");
+            }
+            return false;
+        });
+    })
+</script>
+</body>
+</html>
