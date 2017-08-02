@@ -145,12 +145,12 @@ var MyForm = {
 };
 
 // Заполняем форму
-var valueForm={
-    'fio':'Иванов Иван Иванович',
-    'email':'yandex@yandex.ru',
-    'phone':'+7(111)111-11-11'
-};
-MyForm.setData(valueForm);
+// var valueForm={
+//     'fio':'Иванов Иван Иванович',
+//     'email':'yandex@yandex.ru',
+//     'phone':'+7(111)111-11-11'
+// };
+// MyForm.setData(valueForm);
 
 $(function(){
     $("body").on("click","#submitButton",function(){
