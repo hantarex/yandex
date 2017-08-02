@@ -66,15 +66,17 @@ var MyForm = {
         return dataObject;
     },
     setData: function(dataObject){
-        $.each(dataObject,function(key,val){
-            switch (key){
-                case "phone":
-                case "fio":
-                case "email":
-                    $("#form input[name="+key+"]").val(val);
-                    break;
-                default:
-            }
+        $(function() {
+            $.each(dataObject, function (key, val) {
+                switch (key) {
+                    case "phone":
+                    case "fio":
+                    case "email":
+                        $("#form input[name=" + key + "]").val(val);
+                        break;
+                    default:
+                }
+            });
         });
     },
     validate:function () {
@@ -142,15 +144,15 @@ var MyForm = {
     }
 };
 
-$(function(){
-    // Заполняем форму
-    // var valueForm={
-    //     'fio':'Иванов Иван Иванович',
-    //     'email':'yandex@yandex.ru',
-    //     'phone':'+7(111)111-11-11'
-    // };
-    // MyForm.setData(valueForm);
+// Заполняем форму
+var valueForm={
+    'fio':'Иванов Иван Иванович',
+    'email':'yandex@yandex.ru',
+    'phone':'+7(111)111-11-11'
+};
+MyForm.setData(valueForm);
 
+$(function(){
     $("body").on("click","#submitButton",function(){
         MyForm.submit();
         return false;
